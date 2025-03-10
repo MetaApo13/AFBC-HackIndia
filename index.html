@@ -89,6 +89,131 @@
             text-align: center;
             padding: 20px;
         }
+        
+        /* Calendar styles */
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .calendar th {
+            background-color: #f1f3f9;
+            padding: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .calendar td {
+            height: 80px;
+            padding: 5px;
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        .calendar-day {
+            font-weight: 600;
+            text-align: right;
+            margin-bottom: 5px;
+        }
+        .calendar-date {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-date:hover {
+            background-color: #e0e0e0;
+        }
+        .calendar-date.today {
+            background-color: #667eea;
+            color: white;
+        }
+        .calendar-date.active {
+            background-color: #764ba2;
+            color: white;
+        }
+        .calendar-date.other-month {
+            color: #bdbdbd;
+        }
+        .calendar-task {
+            font-size: 0.7rem;
+            margin-bottom: 2px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .calendar-task.high {
+            background-color: #ffefef;
+            color: #e53935;
+            border-left: 3px solid #e53935;
+        }
+        .calendar-task.medium {
+            background-color: #fff8e6;
+            color: #fb8c00;
+            border-left: 3px solid #fb8c00;
+        }
+        .calendar-task.low {
+            background-color: #e8f5e9;
+            color: #43a047;
+            border-left: 3px solid #43a047;
+        }
+        .calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .calendar-month {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .nav-tabs {
+            border-bottom: none;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+        }
+        .nav-tabs .nav-link.active {
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+        }
+        .task-detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+        .task-detail-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .task-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .day-tasks-list {
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -130,20 +255,22 @@
                 </div>
             </div>
 
-            <!-- Task List -->
+            <!-- Task List and Calendar View -->
             <div class="col-lg-8">
                 <div class="card p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Your Tasks</h4>
-                        <div>
-                            <select id="filter-priority" class="form-select form-select-sm" onchange="fetchTasks()">
-                                <option value="all" selected>All Priorities</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- View Tabs -->
+                    <ul class="nav nav-tabs mb-4" id="viewTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-view" type="button" role="tab" aria-controls="list-view" aria-selected="true">
+                                <i class="fas fa-list me-2"></i>List View
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#calendar-view" type="button" role="tab" aria-controls="calendar-view" aria-selected="false">
+                                <i class="fas fa-calendar-alt me-2"></i>Calendar View
+                            </button>
+                        </li>
+                    </ul>
                     
                     <div class="loading-spinner" id="loading-spinner">
                         <div class="spinner-border text-primary" role="status">
@@ -151,22 +278,70 @@
                         </div>
                     </div>
                     
-                    <div class="table-responsive task-table">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Description</th>
-                                    <th>Deadline</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="task-list">
-                                <!-- Tasks will be inserted here -->
-                            </tbody>
-                        </table>
+                    <div class="tab-content" id="viewTabsContent">
+                        <!-- List View -->
+                        <div class="tab-pane fade show active" id="list-view" role="tabpanel" aria-labelledby="list-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Your Tasks</h4>
+                                <div>
+                                    <select id="filter-priority" class="form-select form-select-sm" onchange="fetchTasks()">
+                                        <option value="all" selected>All Priorities</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive task-table">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Description</th>
+                                            <th>Deadline</th>
+                                            <th>Priority</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="task-list">
+                                        <!-- Tasks will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Calendar View -->
+                        <div class="tab-pane fade" id="calendar-view" role="tabpanel" aria-labelledby="calendar-tab">
+                            <div class="calendar-controls">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="previousMonth()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div class="calendar-month" id="calendar-month">March 2025</div>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="nextMonth()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="calendar">
+                                    <thead>
+                                        <tr>
+                                            <th>Sun</th>
+                                            <th>Mon</th>
+                                            <th>Tue</th>
+                                            <th>Wed</th>
+                                            <th>Thu</th>
+                                            <th>Fri</th>
+                                            <th>Sat</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="calendar-body">
+                                        <!-- Calendar will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="empty-state" class="empty-state d-none">
@@ -178,9 +353,26 @@
             </div>
         </div>
     </div>
+    
+    <!-- Day Tasks Modal -->
+    <div class="task-detail-modal" id="day-tasks-modal">
+        <div class="task-detail-container">
+            <div class="task-detail-header">
+                <h4 id="day-tasks-title">Tasks for March 10, 2025</h4>
+                <button class="btn-close" onclick="closeDayTasksModal()"></button>
+            </div>
+            <div id="day-tasks-list" class="day-tasks-list">
+                <!-- Day tasks will be inserted here -->
+            </div>
+        </div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         const apiUrl = 'http://127.0.0.1:5000/tasks';
+        let allTasks = [];
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
         
         // Show loading state
         function showLoading() {
@@ -197,78 +389,85 @@
             try {
                 const response = await fetch(apiUrl);
                 const tasks = await response.json();
-                const taskList = document.getElementById("task-list");
-                const emptyState = document.getElementById("empty-state");
+                allTasks = tasks; // Store all tasks globally
                 
-                // Filter tasks if a priority filter is selected
-                const priorityFilter = document.getElementById("filter-priority").value;
-                const filteredTasks = priorityFilter === 'all' 
-                    ? tasks 
-                    : tasks.filter(task => task.priority === priorityFilter);
-                
-                // Clear current tasks
-                taskList.innerHTML = "";
-                
-                // Check if there are tasks to display
-                if (filteredTasks.length === 0) {
-                    emptyState.classList.remove('d-none');
-                } else {
-                    emptyState.classList.add('d-none');
-                    
-                    // Display tasks
-                    filteredTasks.forEach(task => {
-                        // Format the deadline date
-                        const deadlineDate = new Date(task.deadline);
-                        const formattedDate = deadlineDate.toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        
-                        // Determine if task is due soon or overdue
-                        const now = new Date();
-                        const isOverdue = deadlineDate < now;
-                        const isDueSoon = !isOverdue && ((deadlineDate - now) / (1000 * 60 * 60)) < 24;
-                        
-                        // Create deadline display with appropriate styling
-                        let deadlineHTML = formattedDate;
-                        if (isOverdue) {
-                            deadlineHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${formattedDate}</span>`;
-                        } else if (isDueSoon) {
-                            deadlineHTML = `<span class="text-warning"><i class="fas fa-clock me-1"></i>${formattedDate}</span>`;
-                        }
-                        
-                        // Create the priority badge with appropriate class
-                        const priorityClass = `priority-${task.priority.toLowerCase()}`;
-                        const priorityHTML = `<span class="priority-badge ${priorityClass}">${task.priority}</span>`;
-                        
-                        // Truncate description if it's too long
-                        const shortDescription = task.description.length > 50
-                            ? task.description.substring(0, 50) + '...'
-                            : task.description;
-                            
-                        taskList.innerHTML += `
-                            <tr>
-                                <td class="fw-semibold">${task.title}</td>
-                                <td><small>${shortDescription}</small></td>
-                                <td>${deadlineHTML}</td>
-                                <td>${priorityHTML}</td>
-                                <td><span class="status-badge">${task.status}</span></td>
-                                <td>
-                                    <button class="btn btn-danger btn-sm task-action-btn" onclick="deleteTask(${task.id})">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </td>
-                            </tr>`;
-                    });
-                }
+                renderListView(tasks);
+                renderCalendar();
             } catch (error) {
                 console.error("Error fetching tasks:", error);
                 alert("Failed to load tasks. Please try again later.");
             } finally {
                 hideLoading();
+            }
+        }
+        
+        function renderListView(tasks) {
+            const taskList = document.getElementById("task-list");
+            const emptyState = document.getElementById("empty-state");
+                
+            // Filter tasks if a priority filter is selected
+            const priorityFilter = document.getElementById("filter-priority").value;
+            const filteredTasks = priorityFilter === 'all' 
+                ? tasks 
+                : tasks.filter(task => task.priority === priorityFilter);
+            
+            // Clear current tasks
+            taskList.innerHTML = "";
+            
+            // Check if there are tasks to display
+            if (filteredTasks.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                
+                // Display tasks
+                filteredTasks.forEach(task => {
+                    // Format the deadline date
+                    const deadlineDate = new Date(task.deadline);
+                    const formattedDate = deadlineDate.toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // Determine if task is due soon or overdue
+                    const now = new Date();
+                    const isOverdue = deadlineDate < now;
+                    const isDueSoon = !isOverdue && ((deadlineDate - now) / (1000 * 60 * 60)) < 24;
+                    
+                    // Create deadline display with appropriate styling
+                    let deadlineHTML = formattedDate;
+                    if (isOverdue) {
+                        deadlineHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${formattedDate}</span>`;
+                    } else if (isDueSoon) {
+                        deadlineHTML = `<span class="text-warning"><i class="fas fa-clock me-1"></i>${formattedDate}</span>`;
+                    }
+                    
+                    // Create the priority badge with appropriate class
+                    const priorityClass = `priority-${task.priority.toLowerCase()}`;
+                    const priorityHTML = `<span class="priority-badge ${priorityClass}">${task.priority}</span>`;
+                    
+                    // Truncate description if it's too long
+                    const shortDescription = task.description.length > 50
+                        ? task.description.substring(0, 50) + '...'
+                        : task.description;
+                        
+                    taskList.innerHTML += `
+                        <tr>
+                            <td class="fw-semibold">${task.title}</td>
+                            <td><small>${shortDescription}</small></td>
+                            <td>${deadlineHTML}</td>
+                            <td>${priorityHTML}</td>
+                            <td><span class="status-badge">${task.status}</span></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm task-action-btn" onclick="deleteTask(${task.id})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                });
             }
         }
 
@@ -349,6 +548,235 @@
             
             document.getElementById("deadline").value = `${year}-${month}-${day}T${hours}:${minutes}`;
         }
+        
+        // Calendar functions
+        function renderCalendar() {
+            const calendarBody = document.getElementById("calendar-body");
+            const calendarMonth = document.getElementById("calendar-month");
+            
+            // Set calendar month title
+            const monthNames = ["January", "February", "March", "April", "May", "June", 
+                               "July", "August", "September", "October", "November", "December"];
+            calendarMonth.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Clear calendar
+            calendarBody.innerHTML = "";
+            
+            // Get first day of the month
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const startingDay = firstDay.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            
+            // Get last day of the month
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const totalDays = lastDay.getDate();
+            
+            // Get today's date for highlighting
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === currentYear;
+            const todayDate = today.getDate();
+            
+            // Get tasks for this month
+            const monthTasks = allTasks.filter(task => {
+                const taskDate = new Date(task.deadline);
+                return taskDate.getMonth() === currentMonth && taskDate.getFullYear() === currentYear;
+            });
+            
+            // Group tasks by date
+            const tasksByDate = {};
+            monthTasks.forEach(task => {
+                const taskDate = new Date(task.deadline);
+                const day = taskDate.getDate();
+                if (!tasksByDate[day]) {
+                    tasksByDate[day] = [];
+                }
+                tasksByDate[day].push(task);
+            });
+            
+            // Calculate previous month's days to display
+            const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+            const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            const prevMonthLastDay = new Date(prevMonthYear, currentMonth, 0).getDate();
+            
+            // Build calendar grid
+            let day = 1;
+            let nextMonthDay = 1;
+            
+            // Create calendar rows (6 rows max to accommodate all months)
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement("tr");
+                
+                // Create calendar cells
+                for (let j = 0; j < 7; j++) {
+                    const cell = document.createElement("td");
+                    
+                    // Fill in previous month's days
+                    if (i === 0 && j < startingDay) {
+                        const prevDate = prevMonthLastDay - startingDay + j + 1;
+                        cell.innerHTML = `
+                            <div class="calendar-day">
+                                <span class="calendar-date other-month">${prevDate}</span>
+                            </div>`;
+                    } 
+                    // Fill in current month's days
+                    else if (day <= totalDays) {
+                        // Check if it's today
+                        const isToday = isCurrentMonth && day === todayDate;
+                        const dateClass = isToday ? "calendar-date today" : "calendar-date";
+                        
+                        // Add date number
+                        cell.innerHTML = `
+                            <div class="calendar-day">
+                                <span class="${dateClass}" onclick="showDayTasks(${day})">${day}</span>
+                            </div>`;
+                        
+                        // Add tasks for this day (max 3 displayed)
+                        if (tasksByDate[day]) {
+                            const dayTasks = tasksByDate[day];
+                            const maxTasksToShow = Math.min(dayTasks.length, 3);
+                            
+                            for (let k = 0; k < maxTasksToShow; k++) {
+                                const task = dayTasks[k];
+                                cell.innerHTML += `
+                                    <div class="calendar-task ${task.priority.toLowerCase()}" onclick="showTaskDetails(${task.id})">
+                                        ${task.title}
+                                    </div>`;
+                            }
+                            
+                            // Show count if there are more
+                            if (dayTasks.length > 3) {
+                                cell.innerHTML += `
+                                    <div class="text-center" style="font-size: 0.7rem; color: #666;">
+                                        +${dayTasks.length - 3} more
+                                    </div>`;
+                            }
+                        }
+                        
+                        day++;
+                    } 
+                    // Fill in next month's days
+                    else {
+                        cell.innerHTML = `
+                            <div class="calendar-day">
+                                <span class="calendar-date other-month">${nextMonthDay}</span>
+                            </div>`;
+                        nextMonthDay++;
+                    }
+                    
+                    row.appendChild(cell);
+                }
+                
+                calendarBody.appendChild(row);
+                
+                // Stop after we've displayed all days
+                if (day > totalDays && i >= 3) {
+                    break;
+                }
+            }
+        }
+        
+        function previousMonth() {
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
+            renderCalendar();
+        }
+        
+        function nextMonth() {
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
+            renderCalendar();
+        }
+        
+        function showDayTasks(day) {
+            // Format date for display
+            const dateObj = new Date(currentYear, currentMonth, day);
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Set modal title
+            document.getElementById("day-tasks-title").textContent = `Tasks for ${formattedDate}`;
+            
+            // Filter tasks for the selected day
+            const dayTasks = allTasks.filter(task => {
+                const taskDate = new Date(task.deadline);
+                return taskDate.getDate() === day && 
+                       taskDate.getMonth() === currentMonth && 
+                       taskDate.getFullYear() === currentYear;
+            });
+            
+            const dayTasksList = document.getElementById("day-tasks-list");
+            dayTasksList.innerHTML = "";
+            
+            if (dayTasks.length === 0) {
+                dayTasksList.innerHTML = `
+                    <div class="alert alert-info">
+                        No tasks scheduled for this day.
+                    </div>`;
+            } else {
+                dayTasks.forEach(task => {
+                    // Format time
+                    const taskTime = new Date(task.deadline).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    // Create task card
+                    dayTasksList.innerHTML += `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title">${task.title}</h5>
+                                    <span class="priority-badge priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                                </div>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    <i class="far fa-clock me-1"></i>${taskTime}
+                                </h6>
+                                <p class="card-text">${task.description || "No description provided."}</p>
+                                <div class="d-flex justify-content-between">
+                                    <span class="status-badge">${task.status}</span>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">
+                                        <i class="fas fa-trash-alt me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+            
+            // Show the modal
+            document.getElementById("day-tasks-modal").style.display = "flex";
+        }
+        
+        function closeDayTasksModal() {
+            document.getElementById("day-tasks-modal").style.display = "none";
+        }
+        
+        function showTaskDetails(taskId) {
+            const task = allTasks.find(t => t.id === taskId);
+            if (task) {
+                const day = new Date(task.deadline).getDate();
+                showDayTasks(day);
+            }
+        }
+
+        // Close modal when clicking outside the content
+        window.onclick = function(event) {
+            const modal = document.getElementById("day-tasks-modal");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
 
         window.onload = function() {
             setDefaultDeadline();
