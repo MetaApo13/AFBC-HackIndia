@@ -2,6 +2,21 @@
 
 ## 📌 Objective
 This project is a **Flask-based Task Management API** that supports:
+
+### Setting Up a Virtual Environment
+Before installing dependencies, it's recommended to create a virtual environment. Run the following commands:
+
+```sh
+# For Linux/macOS
+python3 -m venv venv
+source venv/bin/activate
+
+# For Windows
+python -m venv venv
+venv\Scripts\activate
+```
+
+Once the virtual environment is activated, proceed with the dependency installation.
 - **Natural Language Processing (NLP) for Task Creation** using regex and MeTTa.
 - **Manual Task Creation** via API.
 - **Task Sorting** based on **priority and deadline**.
@@ -34,15 +49,17 @@ python --version   # For Windows
 
 ## 🚀 Running the Project Locally
 
+
+
 ### 1️⃣ Install Dependencies
-Ensure you have Python **3.8+** installed, then run:
+ run:
 ```sh
 pip install flask flask_sqlalchemy flask_cors python-dateutil hyperon
 ```
 
 ### 2️⃣ Run the Flask Server
 ```sh
-python app.py
+python Main.py
 ```
 The server will start on `http://127.0.0.1:5001/`
 
