@@ -1,72 +1,95 @@
-from hyperon import MeTTa
+from hyperon import MeTTa  # Placeholder for future AI-powered automation
 
-# Initialize MeTTa AI Engine
-metta = MeTTa()
+from datetime import datetime
 
-# Function to add a task dynamically
-def add_task():
-    name = input("Enter Task Name: ")
-    deadline = input("Enter Deadline (YYYY-MM-DD, optional): ") or None
-    priority = input("Enter Priority (low, medium, high): ").lower() or "medium"
-    before = input("Enter a Task that this should be done before (optional): ") or None
-    # Construct MeTTa rule
-    task_def = f'(-> (task "{name}")'
-    if deadline:
-        task_def += f' (deadline "{deadline}")'
-    if priority:
-        task_def += f' (priority {priority})'
-    if before:
-        task_def += f' (before "{before}")'
-    task_def += ')'
+class Task:
+    def __init__(self, name, due_date, priority, dependencies=None):
+        """
+        Initializes a new task.
+        :param name: Task name
+        :param due_date: Due date (YYYY-MM-DD format)
+        :param priority: low, medium, high
+        :param dependencies: List of other task names that must be completed first
+        """
+        self.name = name
+        self.due_date = datetime.strptime(due_date, "%Y-%m-%d")
+        self.priority = priority
+        self.dependencies = dependencies if dependencies else []
 
-    # Store in MeTTa
-    metta.run(task_def)
-    print(f"\nTask '{name}' added successfully!\n")
+    def __repr__(self):
+        deps = ", ".join(self.dependencies) if self.dependencies else "None"
+        return f"{self.name} | Due: {self.due_date.date()} | Priority: {self.priority} | Dependencies: {deps}"
 
-# Function to get ordered task list based on dependencies
-def get_task_order():
-    result = metta.run('(query (task ?task) (before ?dependency))')
-    
-    if result:
-        print("\nOptimal Task Sequence:")
-        ordered_tasks = set()
-        for item in result:
-            ordered_tasks.add(item[1])
-            ordered_tasks.add(item[2])
-            print(f" - {item[1]} should be done before {item[2]}")
+class SmartTodo:
+    def __init__(self):
+        self.tasks = []
+
+    def add_task(self, name, due_date, priority, dependencies=None):
+        """Adds a new task to the list."""
+        new_task = Task(name, due_date, priority, dependencies)
+        self.tasks.append(new_task)
+        print(f"✅ Task '{name}' added successfully!\n")
+
+    def view_tasks(self, sort_by="name"):
+        """Displays tasks sorted by name, due date, priority, or dependencies."""
+        if not self.tasks:
+            print("📭 No tasks found!\n")
+            return
+
+        if sort_by == "name":
+            self.tasks.sort(key=lambda t: t.name.lower())
+        elif sort_by == "due_date":
+            self.tasks.sort(key=lambda t: t.due_date)
+        elif sort_by == "priority":
+            priority_order = {"high": 1, "medium": 2, "low": 3}
+            self.tasks.sort(key=lambda t: priority_order[t.priority])
+        elif sort_by == "dependencies":
+            self.tasks.sort(key=lambda t: len(t.dependencies))
+
+        print("\n📌 Your To-Do List:")
+        for idx, task in enumerate(self.tasks, 1):
+            print(f"{idx}. {task}")
+
+    def remove_task(self, name):
+        """Removes a task by name."""
+        self.tasks = [task for task in self.tasks if task.name != name]
+        print(f"❌ Task '{name}' removed!\n")
+
+def main():
+    todo = SmartTodo()
+
+    while True:
+        print("\nOptions:")
+        print("1. Add Task")
+        print("2. View Tasks")
+        print("3. Remove Task")
+        print("4. Exit")
         
-        print("\nOverall Task Order:", " → ".join(ordered_tasks))
-    else:
-        print("\nNo dependencies found. Tasks can be done in any order.")
+        choice = input("Enter your choice (1-4): ").strip()
 
-# Function to recommend next best task
-def get_next_task():
-    recommendation = metta.run('(query (task ?task) (priority high))')
-    if recommendation:
-        print(f"\nRecommended Next Task: {recommendation[0][1]}")
-    else:
-        print("\nNo high-priority tasks found. Proceed with available tasks.")
+        if choice == "1":
+            name = input("Enter Task Name: ").strip()
+            due_date = input("Enter Due Date (YYYY-MM-DD): ").strip()
+            priority = input("Enter Priority (low, medium, high): ").strip().lower()
+            dependencies = input("Enter Dependencies (comma-separated, or leave blank): ").strip()
+            dependencies = [d.strip() for d in dependencies.split(",")] if dependencies else []
+            
+            todo.add_task(name, due_date, priority, dependencies)
 
-# Main Program
-print("\nWelcome to Smart To-Do Task Scheduler with MeTTa\n")
+        elif choice == "2":
+            sort_option = input("Sort by name, due_date, priority, or dependencies? ").strip().lower()
+            todo.view_tasks(sort_by=sort_option if sort_option in ["name", "due_date", "priority", "dependencies"] else "name")
 
-while True:
-    print("\nOptions:")
-    print("1. Add Task")
-    print("2. View Task Order")
-    print("3. Get Next Best Task")
-    print("4. Exit")
+        elif choice == "3":
+            name = input("Enter Task Name to Remove: ").strip()
+            todo.remove_task(name)
 
-    choice = input("\nEnter your choice (1-4): ")
+        elif choice == "4":
+            print("Exiting... ✅")
+            break
 
-    if choice == "1":
-        add_task()
-    elif choice == "2":
-        get_task_order()
-    elif choice == "3":
-        get_next_task()
-    elif choice == "4":
-        print("\nExiting... Have a productive day!")
-        break
-    else:
-        print("\nInvalid choice! Please enter a number between 1 and 4.")
+        else:
+            print("Invalid choice. Please enter a valid option.\n")
+
+if __name__ == "__main__":
+    main()
