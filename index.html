@@ -4,84 +4,356 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 6px 10px rgba(0,0,0,0.08);
+            border: none;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-add-task {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            font-weight: 600;
+        }
+        .priority-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .priority-high {
+            background-color: #ffefef;
+            color: #e53935;
+        }
+        .priority-medium {
+            background-color: #fff8e6;
+            color: #fb8c00;
+        }
+        .priority-low {
+            background-color: #e8f5e9;
+            color: #43a047;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .task-table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .task-table th {
+            background-color: #f1f3f9;
+            font-weight: 600;
+            border-bottom: none;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+            border-color: #667eea;
+        }
+        .task-action-btn {
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin: 0 2px;
+        }
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #9e9e9e;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
 </head>
-<body class="container mt-4">
-    <h2 class="text-center">Task Manager</h2>
-    
-    <!-- Task Form -->
-    <div class="card p-3 mb-3">
-        <h4>Add Task</h4>
-        <input type="text" id="title" class="form-control mb-2" placeholder="Title" required>
-        <textarea id="description" class="form-control mb-2" placeholder="Description"></textarea>
-        <input type="datetime-local" id="deadline" class="form-control mb-2" required>
-        <select id="priority" class="form-control mb-2">
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-        </select>
-        <button class="btn btn-success" onclick="addTask()">Add Task</button>
-    </div>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="app-header text-center mb-4">
+            <h1 class="mb-0"><i class="fas fa-tasks me-2"></i>Task Manager</h1>
+            <p class="mb-0 mt-2">Organize your work and life</p>
+        </div>
+        
+        <div class="row">
+            <!-- Task Form -->
+            <div class="col-lg-4 mb-4">
+                <div class="card p-4 h-100">
+                    <h4 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Add New Task</h4>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" id="title" class="form-control" placeholder="What needs to be done?" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" class="form-control" rows="3" placeholder="Add details about your task"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deadline" class="form-label">Deadline</label>
+                        <input type="datetime-local" id="deadline" class="form-control" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select id="priority" class="form-select">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-add-task text-white" onclick="addTask()">
+                        <i class="fas fa-plus me-2"></i>Add Task
+                    </button>
+                </div>
+            </div>
 
-    <!-- Task List -->
-    <h4>Task List</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Deadline</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="task-list"></tbody>
-    </table>
+            <!-- Task List -->
+            <div class="col-lg-8">
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Your Tasks</h4>
+                        <div>
+                            <select id="filter-priority" class="form-select form-select-sm" onchange="fetchTasks()">
+                                <option value="all" selected>All Priorities</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="loading-spinner" id="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive task-table">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Deadline</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="task-list">
+                                <!-- Tasks will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="empty-state" class="empty-state d-none">
+                        <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                        <h5>No tasks found</h5>
+                        <p>Add a new task to get started</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const apiUrl = 'http://127.0.0.1:5000/tasks';
+        
+        // Show loading state
+        function showLoading() {
+            document.getElementById('loading-spinner').style.display = 'block';
+        }
+        
+        // Hide loading state
+        function hideLoading() {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
 
         async function fetchTasks() {
-            const response = await fetch(apiUrl);
-            const tasks = await response.json();
-            const taskList = document.getElementById("task-list");
-            taskList.innerHTML = "";
-            tasks.forEach(task => {
-                taskList.innerHTML += `
-                    <tr>
-                        <td>${task.title}</td>
-                        <td>${task.description}</td>
-                        <td>${new Date(task.deadline).toLocaleString()}</td>
-                        <td>${task.priority}</td>
-                        <td>${task.status}</td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Delete</button>
-                        </td>
-                    </tr>`;
-            });
+            showLoading();
+            try {
+                const response = await fetch(apiUrl);
+                const tasks = await response.json();
+                const taskList = document.getElementById("task-list");
+                const emptyState = document.getElementById("empty-state");
+                
+                // Filter tasks if a priority filter is selected
+                const priorityFilter = document.getElementById("filter-priority").value;
+                const filteredTasks = priorityFilter === 'all' 
+                    ? tasks 
+                    : tasks.filter(task => task.priority === priorityFilter);
+                
+                // Clear current tasks
+                taskList.innerHTML = "";
+                
+                // Check if there are tasks to display
+                if (filteredTasks.length === 0) {
+                    emptyState.classList.remove('d-none');
+                } else {
+                    emptyState.classList.add('d-none');
+                    
+                    // Display tasks
+                    filteredTasks.forEach(task => {
+                        // Format the deadline date
+                        const deadlineDate = new Date(task.deadline);
+                        const formattedDate = deadlineDate.toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        // Determine if task is due soon or overdue
+                        const now = new Date();
+                        const isOverdue = deadlineDate < now;
+                        const isDueSoon = !isOverdue && ((deadlineDate - now) / (1000 * 60 * 60)) < 24;
+                        
+                        // Create deadline display with appropriate styling
+                        let deadlineHTML = formattedDate;
+                        if (isOverdue) {
+                            deadlineHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${formattedDate}</span>`;
+                        } else if (isDueSoon) {
+                            deadlineHTML = `<span class="text-warning"><i class="fas fa-clock me-1"></i>${formattedDate}</span>`;
+                        }
+                        
+                        // Create the priority badge with appropriate class
+                        const priorityClass = `priority-${task.priority.toLowerCase()}`;
+                        const priorityHTML = `<span class="priority-badge ${priorityClass}">${task.priority}</span>`;
+                        
+                        // Truncate description if it's too long
+                        const shortDescription = task.description.length > 50
+                            ? task.description.substring(0, 50) + '...'
+                            : task.description;
+                            
+                        taskList.innerHTML += `
+                            <tr>
+                                <td class="fw-semibold">${task.title}</td>
+                                <td><small>${shortDescription}</small></td>
+                                <td>${deadlineHTML}</td>
+                                <td>${priorityHTML}</td>
+                                <td><span class="status-badge">${task.status}</span></td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm task-action-btn" onclick="deleteTask(${task.id})">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                alert("Failed to load tasks. Please try again later.");
+            } finally {
+                hideLoading();
+            }
         }
 
         async function addTask() {
-            const title = document.getElementById("title").value;
-            const description = document.getElementById("description").value;
+            const title = document.getElementById("title").value.trim();
+            const description = document.getElementById("description").value.trim();
             const deadline = document.getElementById("deadline").value;
             const priority = document.getElementById("priority").value;
             
-            const response = await fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, description, deadline, priority })
-            });
-            if (response.ok) fetchTasks();
+            // Validate inputs
+            if (!title) {
+                alert("Please enter a task title");
+                return;
+            }
+            
+            if (!deadline) {
+                alert("Please set a deadline");
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, description, deadline, priority })
+                });
+                
+                if (response.ok) {
+                    // Clear form after successful submission
+                    document.getElementById("title").value = "";
+                    document.getElementById("description").value = "";
+                    document.getElementById("deadline").value = "";
+                    document.getElementById("priority").value = "medium";
+                    
+                    fetchTasks();
+                } else {
+                    alert("Failed to add task. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error adding task:", error);
+                alert("Failed to add task. Please try again later.");
+            } finally {
+                hideLoading();
+            }
         }
 
         async function deleteTask(id) {
-            await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
-            fetchTasks();
+            if (confirm("Are you sure you want to delete this task?")) {
+                showLoading();
+                try {
+                    const response = await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+                    if (response.ok) {
+                        fetchTasks();
+                    } else {
+                        alert("Failed to delete task. Please try again.");
+                    }
+                } catch (error) {
+                    console.error("Error deleting task:", error);
+                    alert("Failed to delete task. Please try again later.");
+                } finally {
+                    hideLoading();
+                }
+            }
         }
 
-        window.onload = fetchTasks;
+        // Set default deadline to tomorrow
+        function setDefaultDeadline() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(9, 0, 0, 0);
+            
+            const year = tomorrow.getFullYear();
+            const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const day = String(tomorrow.getDate()).padStart(2, '0');
+            const hours = String(tomorrow.getHours()).padStart(2, '0');
+            const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+            
+            document.getElementById("deadline").value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        window.onload = function() {
+            setDefaultDeadline();
+            fetchTasks();
+        };
     </script>
 </body>
 </html>
